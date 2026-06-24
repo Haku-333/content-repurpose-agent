@@ -19,7 +19,7 @@ const MOCK_OUTPUTS = {
   newsletter: `Subject: Stop writing new content. Start repurposing.\n\nHey friends,\n\nI used to spend 20 hours a week creating content from scratch for 5 different platforms. It was exhausting, and honestly, not very effective.\n\nThe game changed when I realized something: your audience on Twitter doesn't read your blog. Your newsletter subscribers don't see your LinkedIn posts.\n\nHere is my framework for 10x distribution...`,
 };
 
-export function OutputSection({ content, isLoading }) {
+export function OutputSection({ content, isLoading, onRegenerate }) {
   const [activeTab, setActiveTab] = useState("linkedin");
 
   const displayData = content || MOCK_OUTPUTS;
@@ -101,7 +101,7 @@ export function OutputSection({ content, isLoading }) {
               {isLoading ? "0" : charCount} characters
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="gap-2" disabled={isLoading}>onClick={onRegenerate}
+              <Button variant="outline" size="sm" className="gap-2" disabled={isLoading} onClick={onRegenerate}>
                 <RefreshCw className="w-3.5 h-3.5" />
                 Regenerate
               </Button>
