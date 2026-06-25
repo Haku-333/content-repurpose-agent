@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { ArrowLeft, Sparkles, Loader2 } from "lucide-react";
 import { ContentInput } from "../components/Dashboard/ContentInput";
 import { PlatformSelector } from "../components/Dashboard/PlatformSelector";
@@ -10,12 +10,17 @@ import { Link } from "react-router-dom";
 
 export function Project() {
   const { id } = useParams();
+  const location = useLocation();
 
   const isNew = id === "new";
 
-  // 1. Lifted States:
-  const [content, setContent] = useState("");
-  const [platforms, setPlatforms] = useState(["linkedin", "x"]);
+  // Read pre-filled content if navigated from Dashboard
+  const prefillContent = location.state?.prefillContent || "";
+  const prefillPlatforms = location.state?.prefillPlatforms || ["linkedin", "x"];
+
+  // 1. Lifted States — use prefill values as defaults:
+  const [content, setContent] = useState(prefillContent);
+  const [platforms, setPlatforms] = useState(prefillPlatforms);
 
   //2. States for API loading status and resulting data
   const [isLoading, setIsLoading] = useState(false);
