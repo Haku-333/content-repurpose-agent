@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 const AuthContext = createContext(null);
 
@@ -11,37 +12,64 @@ export const useAuth = () => {
 };
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem("reprop_user");
-      return savedUser ? JSON.parse(savedUser) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = (email) => {
-    // Mock login logic
-    const fakeUser = { id: "1", name: "Demo User", email };
-    setUser(fakeUser);
-    localStorage.setItem("reprop_user", JSON.stringify(fakeUser));
+  useEffect(() => {
+    // Check active session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Listen for auth changes (login, logout, etc.)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const login = async (email, password) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+    return data;
   };
 
-  const signup = (name, email) => {
-    // Mock signup logic
-    const fakeUser = { id: "1", name, email };
-    setUser(fakeUser);
-    localStorage.setItem("reprop_user", JSON.stringify(fakeUser));
+  const signup = async (name, email, password) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name: name,
+        }
+      }
+    });
+    if (error) throw error;
+    return data;
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("reprop_user");
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
   };
 
+  const value = {
+    user,
+    login,
+    signup,
+    logout,
+    loading,
+  };
+
+  // Prevent rendering children until we've checked the session once
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout }}>
-      {children}
+    <AuthContext.Provider value={value}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 }

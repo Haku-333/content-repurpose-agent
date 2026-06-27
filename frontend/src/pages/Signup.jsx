@@ -10,10 +10,14 @@ export function Signup() {
   const { signup } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    signup(name, email, password);
-    navigate("/");
+    try {
+      await signup(name, email, password);
+      navigate("/");
+    } catch (error) {
+      alert(error.message || "Failed to sign up");
+    }
   };
 
   return (

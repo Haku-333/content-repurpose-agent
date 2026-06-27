@@ -1,7 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from app.services.gemini_service import generate_content
+from app.dependencies import get_current_user
+from app.services.supabase_service import supabase_admin
 app = FastAPI(title="reprop.io API")
 
 # Configure CORS for frontend access
@@ -25,7 +27,7 @@ class repurposerequest(BaseModel):
 import json
 
 @app.post("/generate")
-def generate(req: repurposerequest):
+def generate(req: repurposerequest, current_user = Depends(get_current_user)):
     result = generate_content(
         req.content,
         req.platform
@@ -42,7 +44,20 @@ def generate(req: repurposerequest):
             text_content = text_content[:-3]
         text_content = text_content.strip()
         
-        return json.loads(text_content)
+        parsed_data = json.loads(text_content)
+        
+        # Save to Supabase (fails silently if table doesn't exist yet)
+        try:
+            supabase_admin.table("projects").insert({
+                "user_id": current_user.id,
+                "original_content": req.content,
+                "platforms": req.platform,
+                "generated_data": parsed_data
+            }).execute()
+        except Exception as db_err:
+            print(f"Warning: Could not save to Supabase: {db_err}")
+            
+        return parsed_data
     except Exception as e:
         return {
             "linkedin": result,

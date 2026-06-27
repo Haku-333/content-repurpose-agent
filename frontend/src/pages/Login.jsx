@@ -9,10 +9,14 @@ export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    login(email, password);
-    navigate("/");
+    try {
+      await login(email, password);
+      navigate("/");
+    } catch (error) {
+      alert(error.message || "Failed to sign in");
+    }
   };
 
   return (
