@@ -23,6 +23,28 @@ class repurposerequest(BaseModel):
     content: str
     platform: str
 
+@app.get("/projects")
+def get_projects(current_user = Depends(get_current_user)):
+    try:
+        response = supabase_admin.table("projects").select("*").eq("user_id", current_user.id).order("created_at", desc=True).execute()
+        return response.data
+    except Exception as e:
+        print(f"Error fetching projects: {e}")
+        return []
+
+@app.get("/projects/{project_id}")
+def get_project(project_id: str, current_user = Depends(get_current_user)):
+    try:
+        response = supabase_admin.table("projects").select("*").eq("id", project_id).eq("user_id", current_user.id).execute()
+        if not response.data:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Project not found")
+        return response.data[0]
+    except Exception as e:
+        print(f"Error fetching project {project_id}: {e}")
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
 
 import json
 

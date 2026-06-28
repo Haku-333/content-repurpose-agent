@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { ArrowLeft, Sparkles, Loader2 } from "lucide-react";
 import { ContentInput } from "../components/Dashboard/ContentInput";
 import { PlatformSelector } from "../components/Dashboard/PlatformSelector";
 import { OutputSection } from "../components/Dashboard/OutputSection";
 import { Button } from "../components/ui/Button";
-import { generateContent } from "../services/api";
+import { generateContent, getProject } from "../services/api";
 import { Link } from "react-router-dom";
 
 export function Project() {
@@ -24,8 +24,26 @@ export function Project() {
 
   //2. States for API loading status and resulting data
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingProject, setIsLoadingProject] = useState(false);
   const [generatedOutput, setGeneratedOutput] = useState(null);
   const [hasGenerated, setHasGenerated] = useState(false);
+
+  useEffect(() => {
+    if (!isNew && id) {
+      setIsLoadingProject(true);
+      getProject(id)
+        .then((data) => {
+          setContent(data.original_content || "");
+          const loadedPlatforms = data.platforms ? data.platforms.split(",").map(p => p.trim()) : ["linkedin", "x"];
+          setPlatforms(loadedPlatforms);
+          setGeneratedOutput(data.generated_data);
+        })
+        .catch((err) => {
+          console.error(err);
+        })
+        .finally(() => setIsLoadingProject(false));
+    }
+  }, [id, isNew]);
   //3. The Function that calls the backend 
   const handleGenerate = async () => {
     if (!content.trim() || platforms.length === 0) return;
@@ -81,9 +99,9 @@ export function Project() {
         </div>
       </div>
       {/* Show the output section only when we actually have generated data or when loading */}
-      {(generatedOutput || isLoading || !isNew) && (
+      {(generatedOutput || isLoading || isLoadingProject || !isNew) && (
         <div className="mt-8">
-          <OutputSection content={generatedOutput} isLoading={isLoading} onRegenerate={handleGenerate} />
+          <OutputSection content={generatedOutput} isLoading={isLoading || isLoadingProject} onRegenerate={handleGenerate} />
         </div>
       )}
     </div>

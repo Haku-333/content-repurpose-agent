@@ -1,8 +1,28 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Plus, Clock, Bookmark, Search } from "lucide-react";
+import { getProjects } from "../../services/api";
+import { useAuth } from "../../contexts/AuthContext";
 
 export function Sidebar() {
   const location = useLocation();
+  const { user } = useAuth();
+  const [projects, setProjects] = useState([]);
+
+  useEffect(() => {
+    if (user) {
+      getProjects()
+        .then(data => setProjects(data))
+        .catch(err => console.error("Failed to load projects", err));
+    }
+  }, [user]);
+
+  // Helper to create a short title from the original content
+  const getProjectTitle = (content) => {
+    if (!content) return "Untitled Project";
+    const title = content.substring(0, 30).trim();
+    return title.length === 30 ? title + "..." : title;
+  };
 
   return (
     <aside className="w-64 flex-shrink-0 border-r border-[#2A2A2A] bg-[#0A0A0A] flex flex-col h-full overflow-y-auto scrollbar-hide">
@@ -32,20 +52,27 @@ export function Sidebar() {
           Recent Projects
         </h3>
         <div className="space-y-0.5">
-          {["Q3 Marketing Campaign", "Product Launch Post", "Weekly Newsletter"].map((project, i) => (
-            <Link
-              key={i}
-              to={`/project/${project.toLowerCase().replace(/ /g, '-')}`}
-              className={`w-full flex items-center px-2 py-1.5 text-sm rounded-sm transition-colors text-left ${
-                location.pathname.includes(project.toLowerCase().replace(/ /g, '-'))
-                  ? "bg-[#111111] text-white"
-                  : "text-[#A0A0A0] hover:bg-[#111111] hover:text-white"
-              }`}
-            >
-              <Clock className="mr-2 h-4 w-4 text-[#666666]" />
-              <span className="truncate">{project}</span>
-            </Link>
-          ))}
+          {projects.length === 0 ? (
+            <p className="px-2 py-1.5 text-xs text-[#666666]">No projects yet.</p>
+          ) : (
+            projects.map((project) => {
+              const isActive = location.pathname === `/project/${project.id}`;
+              return (
+                <Link
+                  key={project.id}
+                  to={`/project/${project.id}`}
+                  className={`w-full flex items-center px-2 py-1.5 text-sm rounded-sm transition-colors text-left ${
+                    isActive
+                      ? "bg-[#111111] text-white"
+                      : "text-[#A0A0A0] hover:bg-[#111111] hover:text-white"
+                  }`}
+                >
+                  <Clock className="mr-2 h-4 w-4 shrink-0 text-[#666666]" />
+                  <span className="truncate">{getProjectTitle(project.original_content)}</span>
+                </Link>
+              );
+            })
+          )}
         </div>
       </div>
 
