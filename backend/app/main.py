@@ -25,7 +25,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # e.g., "https://reprop.io", "https://www.reprop.io"
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "http://127.0.0.1:5173",
+    "https://content-repurpose-agent.vercel.app",
     # TODO: Add your production domain here before deploying
     # "https://your-production-domain.vercel.app",
 ]
