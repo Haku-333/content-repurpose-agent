@@ -1,13 +1,13 @@
 import { supabase } from "../lib/supabase";
 
-const API_URL = "http://localhost:8000";
+const API_URL = "https://content-repurpose-agent.onrender.com";
 
 export async function generateContent(content, platform) {
     const { data: { session } } = await supabase.auth.getSession();
     const headers = {
         "Content-Type": "application/json",
     };
-    
+
     if (session?.access_token) {
         headers["Authorization"] = `Bearer ${session.access_token}`;
     }
